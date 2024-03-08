@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+<!-- Other form fields -->
+
+{% block content %}
+<div class="container">
+    <h1>Metadata Records</h1>
+    <div class="table-responsive"> <!-- Add this class to make the table responsive -->
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Object Name</th>
+                    <th>Listeria</th>
+                    <th>APC</th>
+                    <th>Salmonella</th>
+                    <th>Date of Sample</th>
+                    <th>Time of Sample</th>
+                    <th>Type of Sample</th>
+                    <th>Comment</th>
+                    <th>Actions</th> <!-- Add a new header for actions -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in metadata %}
+                <tr id="metadataRow-{{ data.id }}">
+                    <td>{{ data.id }}</td>
+                    <td>{{ data.object_name }}</td>
+                    <td>{{ data.listeria }}</td>
+                    <td>{{ data.apc }}</td>
+                    <td>{{ data.salmonella }}</td>
+                    <td>{{ data.date_of_sample }}</td>
+                    <td>{{ data.time_of_sample }}</td>
+                    <td>{{ data.type_of_sample }}</td>
+                    <td>{{ data.comment }}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteMetadata({{ data.id }})">Delete</button>
+                    </td>
+                </tr>
+                
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

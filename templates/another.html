@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Child Meshes with Click</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+ 
+    <style>
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 300px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            overflow-y: auto; /* Enable vertical scrolling */
+        }
+
+        #sidebar h3 {
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <div class="form-group">
+            <h3>Model Metadata</h3>
+            <label for="modelUpload">Upload Model</label>
+            <input type="file" class="form-control" id="modelUpload">
+        </div>
+        <div class="form-group">
+            <label for="objectName">Object Name</label>
+            <input type="text" class="form-control" id="objectName">
+        </div>
+        <div class="form-group">
+            <label for="listeria">Listeria</label>
+            <select class="form-control" id="listeria">
+                <option value="positive">Positive</option>
+                <option value="negative">Negative</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="apc">APC</label>
+            <input type="text" class="form-control" id="apc">
+        </div>
+        <div class="form-group">
+            <label for="salmonella">Salmonella</label>
+            <select class="form-control" id="salmonella">
+                <option value="positive">Positive</option>
+                <option value="negative">Negative</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="dateOfSample">Date of Sample</label>
+            <input type="date" class="form-control" id="dateOfSample">
+        </div>
+        <div class="form-group">
+            <label for="timeOfSample">Time of Sample</label>
+            <input type="time" class="form-control" id="timeOfSample">
+        </div>
+        <div class="form-group">
+            <label for="typeOfSample">Type of Sample</label>
+            <input type="text" class="form-control" id="typeOfSample">
+        </div>
+        <div class="form-group">
+            <label for="commentBox">Comment</label>
+            <textarea class="form-control" id="commentBox" rows="3"></textarea>
+        </div>
+        <button class="btn btn-primary" id="submitButton">Submit</button>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="#">EMAPPING</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content area -->
+    <div id="main-content">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', function(){
+            var canvas = document.getElementById('renderCanvas');
+            var engine = new BABYLON.Engine(canvas, true);
+            var scene;
+
+            // Material for highlighting meshes
+            var highlightMaterial;
+
+            // Array to store selected meshes
+            var selectedMesh;
+
+            // Load the default model
+            var defaultModelURL = "defaultModel.glb"; // Default model URL
+            loadModel(defaultModelURL); // Load default model
+
+            // Function to load a 3D model
+            function loadModel(modelURL) {
+                BABYLON.SceneLoader.Load("", modelURL, engine, function(loadedScene) {
+                    scene = loadedScene;
+                    // Create a default camera
+                    var camera = new BABYLON.ArcRotateCamera("camera", 0, Math.PI / 2, 10, BABYLON.Vector3.Zero(), scene);
+                    camera.attachControl(canvas, true);
+
+                    // Create a light
+                    var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+
+                    // Material for highlighting meshes
+                    highlightMaterial = new BABYLON.StandardMaterial("highlightMaterial", scene);
+                    highlightMaterial.emissiveColor = new BABYLON.Color3(1, 0, 0); // Red
+
+                    // Render the scene
+                    engine.runRenderLoop(function(){
+                        scene.render();
+                    });
+
+                    // Enable picking on the scene
+                    scene.onPointerDown = function (evt, pickResult) {
+                        if (pickResult.hit) {
+                            // Deselect previously selected mesh
+                            if (selectedMesh) {
+                                selectedMesh.material = selectedMesh.originalMaterial;
+                            }
+
+                            // Highlight the clicked mesh
+                            selectedMesh = pickResult.pickedMesh;
+                            selectedMesh.originalMaterial = selectedMesh.material;
+                            selectedMesh.material = highlightMaterial;
+
+                            // Populate form fields with mesh information
+                            document.getElementById('objectName').value = selectedMesh.metadata.objectName;
+                            document.getElementById('listeria').value = selectedMesh.metadata.listeria;
+                            document.getElementById('apc').value = selectedMesh.metadata.apc;
+                            document.getElementById('salmonella').value = selectedMesh.metadata.salmonella;
+                            document.getElementById('dateOfSample').value = selectedMesh.metadata.dateOfSample;
+                            document.getElementById('timeOfSample').value = selectedMesh.metadata.timeOfSample;
+                            document.getElementById('typeOfSample').value = selectedMesh.metadata.typeOfSample;
+                            document.getElementById('commentBox').value = selectedMesh.metadata.comment;
+                        }
+                    };
+                });
+            }
+
+            // Submit button click event
+            document.getElementById('submitButton').addEventListener('click', function() {
+                // Update information of selected mesh based on form fields
+                if (selectedMesh) {
+                    // Update metadata of selected mesh
+                    selectedMesh.metadata.objectName = document.getElementById('objectName').value;
+                    selectedMesh.metadata.listeria = document.getElementById('listeria').value;
+                    selectedMesh.metadata.apc = document.getElementById('apc').value;
+                    selectedMesh.metadata.salmonella = document.getElementById('salmonella').value;
+                    selectedMesh.metadata.dateOfSample = document.getElementById('dateOfSample').value;
+                    selectedMesh.metadata.timeOfSample = document.getElementById('timeOfSample').value;
+                    selectedMesh.metadata.typeOfSample = document.getElementById('typeOfSample').value;
+                    selectedMesh.metadata.comment = document.getElementById('commentBox').value;
+
+                    // Example: sending updated data to the console
+                    console.log(selectedMesh.metadata);
+
+                    // Clear the form fields
+                    clearForm();
+                }
+            });
+
+            // Function to clear form fields
+            function clearForm() {
+                document.getElementById('objectName').value = "";
+                document.getElementById('listeria').value = "positive"; // Set default value
+                document.getElementById('apc').value = "";
+                document.getElementById('salmonella').value = "positive"; // Set default value
+                document.getElementById('dateOfSample').value = "";
+                document.getElementById('timeOfSample').value = "";
+                document.getElementById('typeOfSample').value = "";
+                document.getElementById('commentBox').value = "";
+            }
+
+            // Function to handle model upload
+            document.getElementById('modelUpload').addEventListener('change', function(event) {
+                var file = event.target.files[0];
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var modelData = e.target.result;
+                    // Load the uploaded model
+                    loadModel(modelData);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
+</body>
+</html>
